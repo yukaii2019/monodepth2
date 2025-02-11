@@ -25,6 +25,9 @@ import datasets
 import networks
 from IPython import embed
 
+import tqdm
+from datasets.tum_dataset import collect_image_paths
+
 
 class Trainer:
     def __init__(self, options):
@@ -107,36 +110,87 @@ class Trainer:
             self.load_model()
 
         print("Training model named:\n  ", self.opt.model_name)
-        print("Models and tensorboard events files are saved to:\n  ", self.opt.log_dir)
+        # print("Models and tensorboard events files are saved to:\n  ", self.opt.log_dir)
         print("Training is using:\n  ", self.device)
 
         # data
         datasets_dict = {"kitti": datasets.KITTIRAWDataset,
-                         "kitti_odom": datasets.KITTIOdomDataset}
+                         "kitti_odom": datasets.KITTIOdomDataset,
+                         "tum": datasets.TumDataset}
+
+
         self.dataset = datasets_dict[self.opt.dataset]
 
-        fpath = os.path.join(os.path.dirname(__file__), "splits", self.opt.split, "{}_files.txt")
 
-        train_filenames = readlines(fpath.format("train"))
-        val_filenames = readlines(fpath.format("val"))
-        img_ext = '.png' if self.opt.png else '.jpg'
+        
+        if self.opt.dataset == "tum":
+            seq = ["fr1_360", "fr2_xyz", "fr2_rpy", "fr2_large_with_loop",
+                    "fr2_large_no_loop", "fr2_desk", "fr2_360_kidnap", "fr2_360_hemisphere",
+                    "fr1_room", "fr1_rpy", "fr1_floor", "fr1_desk2", "fr1_desk", "fr1_xyz"]
 
-        num_train_samples = len(train_filenames)
-        self.num_total_steps = num_train_samples // self.opt.batch_size * self.opt.num_epochs
+            val_seq = ["fr1_desk", "fr1_desk2", "fr1_room", "fr2_desk", "fr2_xyz"]
+            train_seq = list(set(seq) - set(val_seq))
+            # print(val_seq)
+            # print(train_seq)
 
-        train_dataset = self.dataset(
-            self.opt.data_path, train_filenames, self.opt.height, self.opt.width,
-            self.opt.frame_ids, 4, is_train=True, img_ext=img_ext)
-        self.train_loader = DataLoader(
-            train_dataset, self.opt.batch_size, True,
-            num_workers=self.opt.num_workers, pin_memory=True, drop_last=True)
-        val_dataset = self.dataset(
-            self.opt.data_path, val_filenames, self.opt.height, self.opt.width,
-            self.opt.frame_ids, 4, is_train=False, img_ext=img_ext)
-        self.val_loader = DataLoader(
-            val_dataset, self.opt.batch_size, True,
-            num_workers=self.opt.num_workers, pin_memory=True, drop_last=True)
-        self.val_iter = iter(self.val_loader)
+            train_filenames, train_filenames_map = \
+                collect_image_paths(self.opt.data_path, train_seq)
+            
+            val_filenames, val_filenames_map = \
+                collect_image_paths(self.opt.data_path, val_seq)
+
+            num_train_samples = len(train_filenames)
+
+            print("num_train_samples: ", num_train_samples)
+            print("num_val_samples: ", len(val_filenames))
+
+            self.num_total_steps = num_train_samples // self.opt.batch_size * self.opt.num_epochs
+
+            train_dataset = self.dataset(
+                self.opt.data_path, train_filenames, self.opt.height, self.opt.width,
+                self.opt.frame_ids, 4, is_train=True, img_ext=None, 
+                filenames_map=train_filenames_map)
+            
+            self.train_loader = DataLoader(
+                train_dataset, self.opt.batch_size, shuffle=True,
+                num_workers=self.opt.num_workers, pin_memory=True, drop_last=True)
+            
+            # train_iter = iter(self.train_loader)
+            # inputs = train_iter.next()
+
+            # for key, value in inputs.items() :
+            #     print(key, value.shape)
+
+            # val_dataset = self.dataset(
+            #     self.opt.data_path, val_filenames, self.opt.height, self.opt.width,
+            #     self.opt.frame_ids, 4, is_train=False, img_ext=img_ext)
+            # self.val_loader = DataLoader(
+            #     val_dataset, self.opt.batch_size, True,
+            #     num_workers=self.opt.num_workers, pin_memory=True, drop_last=True)
+            # self.val_iter = iter(self.val_loader)
+
+        else: 
+            fpath = os.path.join(os.path.dirname(__file__), "splits", self.opt.split, "{}_files.txt")
+            train_filenames = readlines(fpath.format("train"))
+            val_filenames = readlines(fpath.format("val"))
+            img_ext = '.png' if self.opt.png else '.jpg'
+
+            num_train_samples = len(train_filenames)
+            self.num_total_steps = num_train_samples // self.opt.batch_size * self.opt.num_epochs
+
+            train_dataset = self.dataset(
+                self.opt.data_path, train_filenames, self.opt.height, self.opt.width,
+                self.opt.frame_ids, 4, is_train=True, img_ext=img_ext)
+            self.train_loader = DataLoader(
+                train_dataset, self.opt.batch_size, True,
+                num_workers=self.opt.num_workers, pin_memory=True, drop_last=True)
+            val_dataset = self.dataset(
+                self.opt.data_path, val_filenames, self.opt.height, self.opt.width,
+                self.opt.frame_ids, 4, is_train=False, img_ext=img_ext)
+            self.val_loader = DataLoader(
+                val_dataset, self.opt.batch_size, True,
+                num_workers=self.opt.num_workers, pin_memory=True, drop_last=True)
+            self.val_iter = iter(self.val_loader)
 
         self.writers = {}
         for mode in ["train", "val"]:
@@ -161,9 +215,9 @@ class Trainer:
         self.depth_metric_names = [
             "de/abs_rel", "de/sq_rel", "de/rms", "de/log_rms", "da/a1", "da/a2", "da/a3"]
 
-        print("Using split:\n  ", self.opt.split)
-        print("There are {:d} training items and {:d} validation items\n".format(
-            len(train_dataset), len(val_dataset)))
+        # print("Using split:\n  ", self.opt.split)
+        # print("There are {:d} training items and {:d} validation items\n".format(
+        #     len(train_dataset), len(val_dataset)))
 
         self.save_opts()
 
@@ -198,7 +252,7 @@ class Trainer:
         print("Training")
         self.set_train()
 
-        for batch_idx, inputs in enumerate(self.train_loader):
+        for batch_idx, inputs in tqdm.tqdm(enumerate(self.train_loader), total = len(self.train_loader), desc='epoch=%d' % self.epoch, ncols=80, leave = False):
 
             before_op_time = time.time()
 
@@ -221,7 +275,7 @@ class Trainer:
                     self.compute_depth_losses(inputs, outputs, losses)
 
                 self.log("train", inputs, outputs, losses)
-                self.val()
+                # self.val()
 
             self.step += 1
 
