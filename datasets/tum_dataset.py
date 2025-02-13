@@ -9,11 +9,17 @@ from .mono_dataset import MonoDataset
 class TumDataset(MonoDataset):
     def __init__(self, *args, **kwargs):
         super(TumDataset, self).__init__(*args, **kwargs)
-        self.K = np.array([[525.0, 0    , 319.5, 0],
-                           [0    , 525.0, 239.5, 0],
+
+        # self.K = np.array([[525.0, 0    , 319.5, 0],
+        #                    [0    , 525.0, 239.5, 0],
+        #                    [0    , 0    , 1    , 0],
+        #                    [0    , 0    , 0    , 1]], dtype=np.float32)
+
+        self.K = np.array([[525.0/640, 0    , 319.5/640, 0],
+                           [0    , 525.0/480, 239.5/480, 0],
                            [0    , 0    , 1    , 0],
                            [0    , 0    , 0    , 1]], dtype=np.float32)
-
+        
         self.full_res_shape = (640, 480)
 
 
@@ -39,16 +45,16 @@ class TumDataset(MonoDataset):
 
 
 
-def collect_image_paths(root_dir, sub_dirs):
-    image_paths = []
-    idx_map = {}
+def collect_image_paths(root_dir, sub_dirs, frame_interval=1, mode="train"):
+    filenames = []
+    filenames_map = {}
 
     for sub_dir in sub_dirs:
         full_path = os.path.join(root_dir, sub_dir)
         for subdir, _, files in os.walk(full_path):
             if "rgb.txt" in files:
                 file_path = os.path.join(subdir, "rgb.txt")
-                temp_paths = []
+                temp_filenames = []
                 with open(file_path, 'r') as file:
                     i = 0
                     for line in file:
@@ -59,14 +65,19 @@ def collect_image_paths(root_dir, sub_dirs):
                                 # dir_name = os.path.dirname(file_path)
                                 base_name = os.path.basename(file_path)
                                 seq = os.path.basename(os.path.normpath(subdir))
-                                temp_paths.append("{} {} {}".format(seq, i, "r"))
-                                idx_map[(seq, i)] = base_name
+                                temp_filenames.append("{} {} {}".format(seq, i, "r"))
+                                filenames_map[(seq, i)] = base_name
                                 i+=1
-                # Exclude first and last image file
-                if len(temp_paths) > 2:
-                    image_paths.extend(temp_paths[1:-1])
+
+                if mode == "test":
+                    # Exclude the last image file 
+                    filenames.extend(temp_filenames[:-frame_interval]) 
+                else:
+                    # Exclude first and last image file
+                    if len(temp_filenames) > frame_interval*2:
+                        filenames.extend(temp_filenames[frame_interval:-frame_interval])
     
-    return image_paths, idx_map
+    return filenames, filenames_map
 
 
 if __name__ == "__main__":

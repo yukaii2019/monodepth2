@@ -124,20 +124,21 @@ class Trainer:
 
         
         if self.opt.dataset == "tum":
-            seq = ["fr1_360", "fr2_xyz", "fr2_rpy", "fr2_large_with_loop",
-                    "fr2_large_no_loop", "fr2_desk", "fr2_360_kidnap", "fr2_360_hemisphere",
-                    "fr1_room", "fr1_rpy", "fr1_floor", "fr1_desk2", "fr1_desk", "fr1_xyz"]
+            # seq = ["fr1_360", "fr2_xyz", "fr2_rpy", "fr2_large_with_loop",
+            #         "fr2_large_no_loop", "fr2_desk", "fr2_360_kidnap", "fr2_360_hemisphere",
+            #         "fr1_room", "fr1_rpy", "fr1_floor", "fr1_desk2", "fr1_desk", "fr1_xyz"]
+            # val_seq = ["fr1_desk", "fr1_desk2", "fr1_room", "fr2_desk", "fr2_xyz"]
+            # train_seq = list(set(seq) - set(val_seq))
 
-            val_seq = ["fr1_desk", "fr1_desk2", "fr1_room", "fr2_desk", "fr2_xyz"]
-            train_seq = list(set(seq) - set(val_seq))
-            # print(val_seq)
-            # print(train_seq)
+            train_seq = self.opt.train_seq
+            val_seq = []
+            print("use ", train_seq, " for training")
 
             train_filenames, train_filenames_map = \
-                collect_image_paths(self.opt.data_path, train_seq)
+                collect_image_paths(self.opt.data_path, train_seq, frame_interval=np.abs(self.opt.frame_ids[1]))
             
             val_filenames, val_filenames_map = \
-                collect_image_paths(self.opt.data_path, val_seq)
+                collect_image_paths(self.opt.data_path, val_seq, frame_interval=np.abs(self.opt.frame_ids[1]))
 
             num_train_samples = len(train_filenames)
 

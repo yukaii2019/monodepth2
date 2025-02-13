@@ -202,7 +202,14 @@ class MonodepthOptions:
                                  help="if set will perform the flipping post processing "
                                       "from the original monodepth paper",
                                  action="store_true")
+        # TUM features
+        self.parser.add_argument("--train_seq",
+                                 nargs="+",
+                                 type=str,
+                                 help="sequences used for training")
+        
 
+        
     def parse(self):
         self.options = self.parser.parse_args()
         return self.options

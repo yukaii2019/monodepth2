@@ -6,3 +6,5 @@ __pycache__
 kitti_data
 models
 log
+tum_dataset
+results
