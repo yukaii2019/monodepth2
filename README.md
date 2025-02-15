@@ -1,3 +1,39 @@
+# How to run
+
+* clone the repo
+```shell
+git clone --recurse-submodules https://github.com/yukaii2019/monodepth2.git
+```
+
+* download dataset
+in tum_dataset, run
+```shell
+bash download.sh
+bash unzip.sh
+bash rename.sh
+```
+
+* train posecnn
+```shell
+bash train.sh
+```
+
+* posecnn inference
+```shell
+bash run_tum.sh $experiment $seq
+```
+
+* dpdm inference
+```shell
+bash run_tum_dpdm.sh $experiment $seq $top
+```
+
+* evaluate result
+```shell
+bash eval.sh $experiment $seq $mode
+```
+
+
 # Monodepth2
 
 This is the reference PyTorch implementation for training and testing depth estimation models using the method described in

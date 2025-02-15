@@ -1,5 +1,5 @@
 
-name=tum_test_4
+name=tum_test_6
 data_path=/home/remote/ykhsieh/tum_monodepth2/monodepth2/tum_dataset
 log_path=./log
 
@@ -31,5 +31,5 @@ CUDA_VISIBLE_DEVICES=0 python3 train.py \
 --width 640 \
 --log_dir ${log_path} \
 --dataset tum \
---frame_ids 0 -1 1 \
+--frame_ids 0 -3 3 \
 --train_seq "${train_sequences[@]}" \

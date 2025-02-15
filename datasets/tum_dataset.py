@@ -15,12 +15,12 @@ class TumDataset(MonoDataset):
         #                    [0    , 0    , 1    , 0],
         #                    [0    , 0    , 0    , 1]], dtype=np.float32)
 
-        self.K = np.array([[525.0/640, 0    , 319.5/640, 0],
-                           [0    , 525.0/480, 239.5/480, 0],
+        self.K = np.array([[525.0/self.width, 0    , 319.5/self.width, 0],
+                           [0    , 525.0/self.height, 239.5/self.height, 0],
                            [0    , 0    , 1    , 0],
                            [0    , 0    , 0    , 1]], dtype=np.float32)
         
-        self.full_res_shape = (640, 480)
+        self.full_res_shape = (self.width, self.height)
 
 
     def get_image_path(self, folder, frame_index, side):

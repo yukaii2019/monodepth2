@@ -4,6 +4,6 @@ seq=$2
 
 python3 run_tum.py \
 -s $seq \
---load_weights_folder ./log/$experiment/models/weights_29 \
+--load_weights_folder ./log/$experiment/models/weights_19 \
 --result_dir ./results/$experiment \
---frame_interval=1
+--frame_interval=3

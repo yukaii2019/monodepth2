@@ -1338,8 +1338,6 @@ def quaternion_from_matrix(matrix, isprecise=False):
             q[j] = M[i, j] + M[j, i]
             q[k] = M[k, i] + M[i, k]
             q[3] = M[k, j] - M[j, k]
-        print(t)
-        print(M[3, 3])
         q *= 0.5 / math.sqrt(t * M[3, 3])
     else:
         m00 = M[0, 0]

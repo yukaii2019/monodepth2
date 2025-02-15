@@ -9,6 +9,30 @@ import os
 import hashlib
 import zipfile
 from six.moves import urllib
+import numpy as np
+
+def readTUMgt(file_path):
+    temp_gt = []
+    with open(file_path, 'r') as file:
+        for line in file:
+            if line.strip() and not line.startswith('#'):
+                parts = line.split()
+                if len(parts) == 8:
+                    temp_gt.append(list(map(lambda t: float(t), parts)))
+    return temp_gt 
+
+def findClosestTimestamp(groundtruth_timestamps, rgb_timestamp):
+    idx = np.searchsorted(groundtruth_timestamps, rgb_timestamp, side='left')
+    if idx == 0:
+        closest_idx = 0
+    elif idx == len(groundtruth_timestamps):
+        closest_idx = len(groundtruth_timestamps) - 1
+    else:
+        left_idx = idx - 1
+        right_idx = idx
+        closest_idx = left_idx if abs(groundtruth_timestamps[left_idx] - rgb_timestamp) < abs(groundtruth_timestamps[right_idx] - rgb_timestamp) else right_idx
+
+    return closest_idx
 
 
 def readlines(filename):

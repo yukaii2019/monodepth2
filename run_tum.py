@@ -76,7 +76,7 @@ if __name__ == "__main__":
             features = [pose_encoder(posecnn_input)]
             axisangle, translation = pose_decoder(features)
             pred_poses.append(
-                transformation_from_parameters(axisangle[:, 0], translation[:, 0]).cpu().numpy())
+                transformation_from_parameters(axisangle[:, 0], translation[:, 0], invert=True).cpu().numpy())
 
     # pred_poses = np.concatenate([np.eye(4).reshape(1, 4, 4)] + pred_poses)
 
@@ -101,19 +101,6 @@ if __name__ == "__main__":
         ref_pose = cur_pose 
 
 
-
-    # for i, (k, v) in tqdm(enumerate(filenames_map.items())):        
-    #     time_stamp = os.path.splitext(v)[0]
-    #     rel_pose = pred_poses[i]
-    #     if i != 0:
-
-    #         cur_pose = ref_pose @ rel_pose
-    #     else:
-    #         cur_pose = np.eye(4)
-    #     global_poses[time_stamp] = cur_pose 
-    #     ref_pose = cur_pose
-
-
     output_path = os.path.join(args.result_dir, args.seq)
     if not os.path.exists(output_path):
         os.makedirs(output_path)
@@ -123,10 +110,11 @@ if __name__ == "__main__":
     result = []
     outputfile = open(os.path.join(output_path, "pred.txt"), "w")
     for time_stamp, pose in global_poses.items():
-        orientation = quaternion_from_matrix(pose, False)
+        quat = quaternion_from_matrix(pose, False)
+        quat = np.roll(quat, -1, axis=0) # shift -1 column -> w in back column
         position = pose[:3, 3]
         outputfile.write('{} {} {} {} {} {} {} {}\n'.format(time_stamp, position[0], position[1], position[2], 
-                                             orientation[0], orientation[1], orientation[2], orientation[3]))
+                                             quat[0], quat[1], quat[2], quat[3]))
 
     outputfile.close()
         
