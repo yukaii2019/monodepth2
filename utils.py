@@ -10,6 +10,70 @@ import hashlib
 import zipfile
 from six.moves import urllib
 import numpy as np
+import cv2
+
+def drawKeyPts(im,keyp,col,th):
+    for curKey in keyp:
+        x=np.int(curKey.pt[0])
+        y=np.int(curKey.pt[1])
+        size = np.int(curKey.size)
+        cv2.circle(im,(x,y),size, col,thickness=th, lineType=8, shift=0) 
+    return im    
+
+def draw_match_side(img1, kp1, img2, kp2, N, inliers):
+    """Draw matches on 2 sides
+
+    Args:
+        img1 (array, [HxWxC]): image 1
+        kp1 (array, [Nx2]): keypoint for image 1
+        img2 (array, [HxWxC]): image 2
+        kp2 (array, [Nx2]): keypoint for image 2
+        N (int): number of matches to be drawn
+        inliers (array, [Nx1]): boolean mask for inlier
+        
+    Returns:
+        out_img (array, [Hx2WxC]): output image with drawn matches
+    """
+    out_img = np.array([])
+    
+    # generate a list of keypoints to be drawn
+    kp_list = np.linspace(0, min(kp1.shape[0], kp2.shape[0])-1, N,
+                            dtype=np.int
+                            )
+    
+    # Convert keypoints to cv2.Keypoint object
+    cv_kp1 = [cv2.KeyPoint(x=pt[0], y=pt[1], _size=1) for pt in kp1[kp_list]]
+    cv_kp2 = [cv2.KeyPoint(x=pt[0], y=pt[1], _size=1) for pt in kp2[kp_list]]
+
+    good_matches = [cv2.DMatch(_imgIdx=0, _queryIdx=idx, _trainIdx=idx,_distance=0) for idx in range(len(cv_kp1))]
+
+    img1 = cv2.cvtColor(img1, cv2.COLOR_RGB2BGR)
+    img2 = cv2.cvtColor(img2, cv2.COLOR_RGB2BGR)
+
+    # output_image = drawKeyPts(img1,cv_kp1,(0, 255, 255),5)
+    # cv2.imwrite("kp.png", output_image) 
+
+    # inlier/outlier plot option
+    if inliers is not None:
+        inlier_mask = inliers[kp_list].ravel().tolist()
+        inlier_draw_params = dict(matchColor = (0,255,0), # draw matches in green color
+                    singlePointColor = None,
+                    matchesMask = inlier_mask, # draw only inliers
+                    flags = 2)
+        
+        outlier_mask = (inliers==0)[kp_list].ravel().tolist()
+        outlier_draw_params = dict(matchColor = (255,0,0), # draw matches in red color
+                    singlePointColor = None,
+                    matchesMask = outlier_mask, # draw only inliers
+                    flags = 2)
+        out_img1 = cv2.drawMatches(img1, cv_kp1, img2, cv_kp2, good_matches, outImg=out_img, **inlier_draw_params)
+        out_img2 = cv2.drawMatches(img1, cv_kp1, img2, cv_kp2, good_matches, outImg=out_img, **outlier_draw_params)
+        out_img = cv2.addWeighted(out_img1, 0.5, out_img2, 0.5, 0)
+    else:
+        out_img = cv2.drawMatches(img1, cv_kp1, img2, cv_kp2, matches1to2=good_matches, outImg=out_img)
+    
+    
+    return out_img
 
 def readTUMgt(file_path):
     temp_gt = []

@@ -1,0 +1,1 @@
+{"title": "APE w.r.t. translation part (m)\n(with Sim(3) Umeyama alignment)", "ref_name": "tum_dataset/fr2_desk/groundtruth.txt", "est_name": "./results/tum_test_6/fr2_desk/pred.txt", "label": "APE (m)"}

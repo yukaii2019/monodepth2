@@ -276,7 +276,8 @@ class Trainer:
                     self.compute_depth_losses(inputs, outputs, losses)
 
                 self.log("train", inputs, outputs, losses)
-                # self.val()
+                if not self.opt.dataset == "tum": 
+                    self.val()
 
             self.step += 1
 

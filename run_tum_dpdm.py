@@ -19,8 +19,8 @@ from transformations import quaternion_from_matrix, quaternion_matrix
 
 from SuperGluePretrainedNetwork.models.superglue import SuperGlue
 from SuperGluePretrainedNetwork.models.superpoint import SuperPoint
-from utils import readTUMgt, findClosestTimestamp
-
+from utils import readTUMgt, findClosestTimestamp, draw_match_side
+from frame_drawer import FrameDrawer
 
 def se3_exp(x):
     '''
@@ -281,6 +281,7 @@ if __name__ == "__main__":
         global_poses[time_stamp] = cur_pose 
         ref_pose = cur_pose 
     '''
+    drawer = FrameDrawer()
 
     print("-> Computing global pose") 
     global_poses = {}
@@ -325,18 +326,30 @@ if __name__ == "__main__":
             cur_points = keypoint[0][queryIdx].detach().cpu().numpy()
             ref_points = ref_keypoint[0][trainIdx].detach().cpu().numpy()
             
+            cur_img = np.asarray(dataset.get_color(args.seq, i, "r", False))
+
+            
+            # out_img = draw_match_side(ref_img, ref_points, cur_img, cur_points, N=args.top, inliers=None)
+            # cv2.imwrite("matching.png", out_img) 
+            # exit()
+
+            
+
+
             for itr in range(30):
                 X = cv2.triangulatePoints(K @ rel_pose[:3], K @ np.eye(4)[:3], ref_points.astype(np.float64).T, cur_points.astype(np.float64).T)
                 X /= X[3]
                 rel_pose = BA_GN(X.T, ref_points, K, 5, rel_pose)
 
             cur_pose = ref_pose @ rel_pose
+            drawer.main(i, cur_pose, None, ref_points, cur_points, ref_img, cur_img, inlier=None, N=args.top)
 
         else:
             cur_pose = np.eye(4)
             keypoint = pred_keypoints[0].unsqueeze(0)
             score = pred_scores[0].unsqueeze(0)
             descriptor = pred_descriptors[0].unsqueeze(0)
+            cur_img = np.asarray(dataset.get_color(args.seq, 0, "r", False))
 
 
         global_poses[time_stamp] = cur_pose 
@@ -346,6 +359,7 @@ if __name__ == "__main__":
         ref_keypoint = keypoint
         ref_score = score
         ref_descriptor = descriptor
+        ref_img = cur_img 
 
 
 

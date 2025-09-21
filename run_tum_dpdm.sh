@@ -16,4 +16,4 @@ python3 run_tum_dpdm.py \
 --load_weights_folder ./log/$experiment/models/weights_19 \
 --result_dir $result_dir \
 --frame_interval=3 \
---top=63
+--top=$top

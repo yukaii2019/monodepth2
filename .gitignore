@@ -10,4 +10,3 @@ tum_dataset
 !tum_dataset/download.sh
 !tum_dataset/unzip.sh
 !tum_dataset/rename.sh
-results
